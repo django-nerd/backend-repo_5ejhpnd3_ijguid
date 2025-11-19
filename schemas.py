@@ -11,8 +11,8 @@ Model name is converted to lowercase for the collection name:
 - BlogPost -> "blogs" collection
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
 
 # Example schemas (replace with your own):
 
@@ -22,7 +22,7 @@ class User(BaseModel):
     Collection name: "user" (lowercase of class name)
     """
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
+    email: EmailStr = Field(..., description="Email address")
     address: str = Field(..., description="Address")
     age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
     is_active: bool = Field(True, description="Whether user is active")
@@ -38,11 +38,29 @@ class Product(BaseModel):
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+# synk.ai specific schemas
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class WaitlistUser(BaseModel):
+    """Waitlist signups (collection: waitlistuser)"""
+    email: EmailStr
+    name: Optional[str] = None
+    source: Optional[str] = Field(default="marketing", description="Origin of signup")
+
+class VideoJob(BaseModel):
+    """Represents an uploaded video processing job (collection: videojob)"""
+    email: Optional[EmailStr] = None
+    filename: str
+    size_bytes: int
+    status: str = Field(default="queued", description="queued|processing|completed|failed")
+    progress: int = Field(default=0, ge=0, le=100)
+    steps: List[str] = Field(default_factory=lambda: [
+        "analyze_content",
+        "detect_cuts",
+        "auto_captions",
+        "select_music",
+        "insert_b_roll",
+        "color_and_export"
+    ])
+    current_step: Optional[str] = None
+    render_url: Optional[str] = None
+    error: Optional[str] = None
